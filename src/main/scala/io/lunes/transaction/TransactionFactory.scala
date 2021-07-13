@@ -1,6 +1,11 @@
 package io.lunes.transaction
 
 import com.google.common.base.Charsets
+import io.lunes.assets.fees.{
+  NFTFee,
+  RegularAssetFee,
+  feeValidatorSelectionForIssueRequest
+}
 import io.lunes.security.SecurityChecker
 import io.lunes.settings.Constants
 import io.lunes.state2.ByteStr
@@ -13,6 +18,8 @@ import scorex.api.http.leasing.{LeaseCancelRequest, LeaseRequest}
 import scorex.crypto.encode.Base58
 import scorex.utils.Time
 import scorex.wallet.Wallet
+
+import scala.Left
 
 /**
   *
@@ -127,12 +134,19 @@ object TransactionFactory {
     wallet: Wallet,
     time: Time,
     balance: Option[Long] = None
-  ): Either[ValidationError, IssueTransaction] =
-    if (balance.getOrElse(0L) < Constants.MinimalStakeForIssueOrReissue)
-      Left(
-        ValidationError
-          .InsufficientLunesInStake(request.sender, balance.getOrElse(0))
-      )
+  ): Either[ValidationError, IssueTransaction] = {
+    val requestValidator = feeValidatorSelectionForIssueRequest(request)
+    if (requestValidator.dontSatisfyMinimalFee(balance.getOrElse(0L)))
+      Left(requestValidator match {
+        case NFTFee =>
+          ValidationError.InsufficientLunesInStakeForNFT(
+            request.sender,
+            balance.getOrElse(0L)
+          )
+        case _ =>
+          ValidationError
+            .InsufficientLunesInStake(request.sender, balance.getOrElse(0))
+      })
     else
       for {
         senderPrivateKey <- wallet.findWallet(request.sender)
@@ -148,6 +162,7 @@ object TransactionFactory {
           timestamp
         )
       } yield tx
+  }
 
   /**
     *
@@ -228,7 +243,7 @@ object TransactionFactory {
     time: Time,
     balance: Option[Long] = None
   ): Either[ValidationError, ReissueTransaction] = {
-    if (balance.getOrElse(0L) < Constants.MinimalStakeForIssueOrReissue)
+    if (RegularAssetFee.dontSatisfyMinimalFee(balance.getOrElse(0L)))
       Left(
         ValidationError
           .InsufficientLunesInStake(request.sender, balance.getOrElse(0))

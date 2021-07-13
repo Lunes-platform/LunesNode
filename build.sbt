@@ -1,19 +1,15 @@
-import com.typesafe.sbt.packager.archetypes.TemplateWriter
-import sbt.Keys.{sourceGenerators, _}
+import sbt.Keys._
 import sbt._
-import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 enablePlugins(GitVersioning)
 git.useGitDescribe := true
-git.baseVersion := "0.0.7"
+git.baseVersion := "0.1.2"
 name := "LunesNode"
 mainClass in Compile := Some("io.lunes.LunesNode")
 
-inThisBuild(Seq(
-  scalaVersion := "2.12.4",
-  organization := "io.lunes",
-  crossPaths := false
-))
+inThisBuild(
+  Seq(scalaVersion := "2.12.4", organization := "io.lunes", crossPaths := false)
+)
 
 scalacOptions ++= Seq(
   "-feature",
@@ -21,7 +17,8 @@ scalacOptions ++= Seq(
   "-language:higherKinds",
   "-language:implicitConversions",
   "-Ywarn-unused:-implicits",
-  "-Xlint")
+  "-Xlint"
+)
 
 resolvers += Resolver.bintrayRepo("ethereum", "maven")
 
@@ -31,33 +28,34 @@ normalizedName := network.value.name
 
 fork in run := true
 
-lazy val node = project.in(file("."))
+lazy val node = project
+  .in(file("."))
   .settings(
     libraryDependencies ++=
       Dependencies.network ++
-      Dependencies.db ++
-      Dependencies.http ++
-      Dependencies.akka ++
-      Dependencies.serialization ++
-      Dependencies.testKit.map(_ % "test") ++
-      Dependencies.logging ++
-      Dependencies.matcher ++
-      Dependencies.metrics ++
-      Dependencies.fp ++
-      Dependencies.ficus ++
-      Dependencies.scorex ++
-      Dependencies.commons_net ++
-      Dependencies.monix.value
+        Dependencies.db ++
+        Dependencies.http ++
+        Dependencies.akka ++
+        Dependencies.serialization ++
+        Dependencies.testKit.map(_ % "test") ++
+        Dependencies.logging ++
+        Dependencies.matcher ++
+        Dependencies.metrics ++
+        Dependencies.fp ++
+        Dependencies.ficus ++
+        Dependencies.scorex ++
+        Dependencies.commons_net ++
+        Dependencies.monix.value
   )
 
 //assembly settings
 assemblyJarName in assembly := s"LunesNode-all-${version.value}.jar"
 assemblyMergeStrategy in assembly := {
-  case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.concat
+  case PathList("META-INF", "io.netty.versions.properties") =>
+    MergeStrategy.concat
   case other => (assemblyMergeStrategy in assembly).value(other)
 }
 test in assembly := {}
-
 
 javaOptions in Universal ++= Seq(
   // -J prefix is required by the bash script
@@ -69,14 +67,12 @@ javaOptions in Universal ++= Seq(
   // Java 9 support
   "-J-XX:+IgnoreUnrecognizedVMOptions",
   "-J--add-modules=java.xml.bind",
-
   // from https://groups.google.com/d/msg/akka-user/9s4Yl7aEz3E/zfxmdc0cGQAJ
   "-J-XX:+UseG1GC",
   "-J-XX:+UseNUMA",
   "-J-XX:+AlwaysPreTouch",
-
   // probably can't use these with jstack and others tools
   "-J-XX:+PerfDisableSharedMem",
   "-J-XX:+ParallelRefProcEnabled",
-  "-J-XX:+UseStringDeduplication")
-
+  "-J-XX:+UseStringDeduplication"
+)

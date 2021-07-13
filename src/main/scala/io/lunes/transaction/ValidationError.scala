@@ -1,6 +1,7 @@
 package io.lunes.transaction
 
 import com.google.common.base.Throwables
+import io.lunes.assets.fees.{NFTFee, RegularAssetFee}
 import io.lunes.settings.Constants
 import io.lunes.state2.ByteStr
 import io.lunes.transaction.assets.exchange.Order
@@ -72,6 +73,12 @@ object ValidationError {
       extends ValidationError {
     private def convertBalance(balance: Long): Double = balance / 100000000
     override def toString: String =
-      s"Address $address does not have enough balance (${convertBalance(balance)} Lunes). Minimum balance is ${convertBalance(Constants.MinimalStakeForIssueOrReissue)}."
+      s"Address $address does not have enough balance (${convertBalance(balance)} Lunes). Minimum balance is ${convertBalance(RegularAssetFee.minimalBalance)}."
+  }
+  case class InsufficientLunesInStakeForNFT(address: String, balance: Long)
+      extends ValidationError {
+    private def convertBalance(balance: Long): Double = balance / 100000000
+    override def toString: String =
+      s"Address $address does not have enough balance (${convertBalance(balance)} Lunes) for NFT type of Asset. Minimum balance is ${convertBalance(NFTFee.minimalBalance)}."
   }
 }

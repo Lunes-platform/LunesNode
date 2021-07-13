@@ -46,4 +46,5 @@ object Constants extends ScorexLogging {
   )
 
   val MinimalStakeForIssueOrReissue: Long = 2000000000000L
+  val IssueAssetTransactionFee = 100000000
 }

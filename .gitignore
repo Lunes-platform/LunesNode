@@ -42,3 +42,9 @@ LOG.old
 package
 !src/package
 native
+
+
+.metals
+.bloop
+.vscode
+/project/project
